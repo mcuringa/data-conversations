@@ -64,19 +64,10 @@ class SchoolDataSkill(MycroftSkill):
 
         bus_data = {'data': pd.DataFrame.to_json(t.school_name, orient='records'),
           'view': 'school-list',
-          'title':"Which school do you want to show?"}
-
-        self.bus.emit(Message("core",  bus_data))
-
-        # self.gui.clear()
-        # self.log.info(f"found schools {len(t.school_name)}")
-        # self.gui["school_list"] = pd.DataFrame.to_json(t.school_name, orient='records')
-        # self.gui.show_page("details.qml")
+          'title':"Which school do you want to see?"}
 
 
-
-        # self.bus.emit(Message('schools.data.set',
-        #                   {"school_list": pd.DataFrame.to_json(t, orient='records') }))
+        self.bus.emit(Message('data_conversations:list', bus_data))
 
         self.speak(f"looking for school called {qry}")
 

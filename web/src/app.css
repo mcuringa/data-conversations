@@ -1,0 +1,16 @@
+/* body {
+	background-color: black;
+	color: white
+}
+*/
+
+.App {
+	height: 100vh;
+}
+
+
+.ChatPanel, .MainPanel {
+	height: 100vh;
+	/* float: none;
+	display: table-cell; */
+}

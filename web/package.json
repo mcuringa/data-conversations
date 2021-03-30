@@ -15,7 +15,9 @@
   "license": "ISC",
   "dependencies": {
     "bootstrap": "^4.5.3",
+    "classnames": "^2.2.6",
     "css-loader": "^3.6.0",
+    "lodash": "^4.17.21",
     "luxon": "^1.26.0",
     "react": "^16.14.0",
     "react-bootstrap": "^1.4.0",
