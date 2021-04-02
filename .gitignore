@@ -129,5 +129,5 @@ dmypy.json
 .pyre/
 
 # node stuff
-node_modules/
+web/node_modules/
 
