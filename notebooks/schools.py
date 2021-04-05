@@ -80,7 +80,7 @@ def load_demographics():
 
     # figure out what grades they teach
     df["pk"] = df["grade_3k_pk_half_day_full"] > 0
-    df["elementary"] = df["grade_1"] > 0
+    df["elementary"] = df["grade_2"] > 0
     df["middle"] = df["grade_7"] > 0
     df["hs"] = df["grade_10"] > 0
 
@@ -111,8 +111,41 @@ def load_demographics():
     df["non_white_asian"] = df.total_enrollment - df.white_asian
     df["non_white_asian_1"] = df.non_white_asian / df.total_enrollment
 
+
+    pct_cols = [col for col in df.columns if col.endswith("_1") and col != "grade_1"]
+
+    df = df.apply(lambda x: pct_to_float(x, pct_cols), axis=1)
+    for col in pct_cols:
+        df[col] = pd.to_numeric(df[col])
+
     return df
 
+
+def pct_to_float(row, cols):
+    """
+    Cleans data that is expected to be a percentage expressed
+    as a float. If the data is a string ending in a % sign, it's
+    converted to a float. If the sample is too small ("Below 5%"),
+    return .04, if the sample is too high, ("Above 95%") return .96
+    @row the row of the DataFrame
+    @cols the column names to convert
+    @return the row with the coerced float values
+    """
+    for col in cols:
+        try:
+            float(row[col])
+            continue
+        except:
+            pass
+
+        if "Below" in row[col]:
+            row[col] = .04
+        elif "Above" in row[col]:
+            row[col] = .96
+
+        pct = str(row.poverty_1)[:-1]
+        row[col] = float(pct) / 100
+    return row
 
 def school_type(school):
     """
@@ -208,7 +241,7 @@ def calc_districts(df):
         "dbn": "count"
     }
 
-    districts = df.groupby(["district", "year", "year"]).agg(demo_agg).reset_index()
+    districts = df.groupby(["district", "year"]).agg(demo_agg).reset_index()
     districts = districts.rename(columns={"dbn":"num_schools"})
     del demo_agg["dbn"]
 
