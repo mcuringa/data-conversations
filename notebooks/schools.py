@@ -11,7 +11,6 @@ SCHOOL_BASIC = [
  'school_name',
  'year',
  'total_enrollment',
- 'ay',
  'district',
  'boro',
  'boro_name'
@@ -65,7 +64,7 @@ def load_demographics():
            district: the school district number [1..32, 75, 79, 84]
                boro: borough code string ["M","B","X","Q","R"]
           boro_name: string of the full borough name
-                 ay: the academic year as an integer representing the calendar
+               year: the academic year as an integer representing the calendar
                      year in the fall of the school year
         white_asian: combined number of white and asian students
           non_white: total number of non white students
@@ -168,10 +167,10 @@ def short_name(row):
 
 def find_school(df, qry):
     t = df.copy(deep=False)
-    latest = t.ay.max()
+    latest = t.year.max()
 
     # first lookup by number
-    t = t.query(f"short_name == '{qry.upper()}' and ay=={latest}")
+    t = t.query(f"short_name == '{qry.upper()}' and year=={latest}")
     if len(t) > 0:
         return t
 
@@ -179,7 +178,7 @@ def find_school(df, qry):
     t = df.copy(deep=False)
 
     t["match"] = t.clean_name.apply(lambda sn: fuzz.token_set_ratio(qry, sn))
-    t = t.query(f"match > 80 and ay=={latest}")
+    t = t.query(f"match > 80 and year=={latest}")
     t = pd.DataFrame(t)
     # now sort the results based on the ratio match
     t["match"] = t.clean_name.apply(lambda sn: fuzz.ratio(qry, sn))
@@ -209,7 +208,7 @@ def calc_districts(df):
         "dbn": "count"
     }
 
-    districts = df.groupby(["district", "year", "ay"]).agg(demo_agg).reset_index()
+    districts = df.groupby(["district", "year", "year"]).agg(demo_agg).reset_index()
     districts = districts.rename(columns={"dbn":"num_schools"})
     del demo_agg["dbn"]
 
