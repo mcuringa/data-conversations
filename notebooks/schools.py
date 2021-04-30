@@ -128,7 +128,7 @@ def pct_to_float(row, cols):
     converted to a float. If the sample is too small ("Below 5%"),
     return .04, if the sample is too high, ("Above 95%") return .96
     @row the row of the DataFrame
-    @cols the column names to convert
+    @cols the column names that should be converted to percents between 0 and 1
     @return the row with the coerced float values
     """
     for col in cols:
@@ -142,9 +142,9 @@ def pct_to_float(row, cols):
             row[col] = .04
         elif "Above" in row[col]:
             row[col] = .96
-
-        pct = str(row.poverty_1)[:-1]
-        row[col] = float(pct) / 100
+        else:
+            pct = str(row.poverty_1)[:-1]
+            row[col] = float(pct) / 100
     return row
 
 def school_type(school):
