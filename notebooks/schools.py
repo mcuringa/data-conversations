@@ -16,7 +16,7 @@ SCHOOL_BASIC = [
  'boro_name'
 ]
 
-DEMO_GROUPS = [
+DEMO_GROUPS = SCHOOL_BASIC + [
  'female',
  'female_1',
  'male',
