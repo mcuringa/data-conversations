@@ -6,11 +6,37 @@
 
 .App {
 	height: 100vh;
+
 }
 
-
-.ChatPanel, .MainPanel {
+ .App {
 	height: 100vh;
+	padding: 0;
+	margin: 0;
 	/* float: none;
 	display: table-cell; */
+}
+
+.Face {
+	height: 100px;
+	max-height: 100px;
+}
+
+.Footer {
+	height: 200px;
+	max-height: 200px;
+	overflow: hidden;
+}
+
+.Chat {
+	height: 1000px;
+	max-height: 1000px;
+}
+
+.ChatPanel {
+	width: 300px;
+	max-width: 300px;
+	padding: 0;
+	margin: 0;
+  height: 100vh;
 }

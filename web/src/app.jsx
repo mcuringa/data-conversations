@@ -4,92 +4,54 @@ import { DateTime } from 'luxon';
 
 
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 import './app.css';
+import MIXILogo from "./ui/mixi-logo.png";
+
 import Spinner from "./ui/spinner.jsx"
-import Face from "./face/face.jsx"
-import Chat from "./chat/chat.jsx"
-import {busListener} from "util/bus.js"
+import Face from "react-mycroft/face/face.jsx"
+import Chat from "react-mycroft/chat/chat.jsx"
+import ChatBox from "./chat/chatbox.jsx"
+import mycroft from "react-mycroft/bus.js"
+
+import ChoiceList from "./data-views/choice-list.jsx"
 
 function App(props) {
-    const [ws, setWs] = useState(null);
-    useEffect(()=>{
-      if (!ws) {
-        connectMycroftBus(setWs)
-      }
-    });
-    if (!ws) {
-      return <Spinner msg="connecting to mycroft ..." />
-    }
-
     return (
-      <div className="App container-fluid">
-        <div className="ChatPanel row">
-          <div className="col border-right">
-            <MycroftPanel ws={ws} />
-          </div>
-          <div className="MainPanel col-sm-10">
-
-          </div>
-        </div>
+      <div className="App container-fluid p-0 d-flex justify-content-start overflow-auto">
+        <mycroft.MessageBusLog />
       </div>
     );
 }
 
 
-function 	connectMycroftBus(setWs) {
-  const ws = new WebSocket("ws://localhost:8181/core")
-  ws.onopen = (event) => {
-    setWs(ws);
-  }
+// <div className="App container-fluid p-0 d-flex justify-content-start">
+//   <MycroftPanel ws={ws} />
+//   <div className="MainPanel">
+//       <MycroftPanel ws={ws} />
+//   </div>
+// </div>
 
-}
-
-
-
-function Chatter(props) {
-
-  let [messages, setMsg] = useState([]);
-  let last = ""
-  const addMsg = (data) => {
-      console.log(data);
-      messages.unshift(data);
-      messages = messages.slice(0,20);
-      last = messages[0].type;
-      setMsg([...messages]);
-  }
-
-  let listen = ()=> {props.ws.addEventListener("message", busListener(addMsg, null, "^mycroft-date-time.*$"))};
-  listen = _.once(listen);
-  useEffect(listen, [last]);
-
-  const log = _.map(messages, MycroftMessageLog);
-  return <div>{log}</div>
-
-}
-
-
-function MycroftMessageLog(m, i) {
-  return (
-    <pre key={i}>
-      {m.type}
-      {JSON.stringify(m.data, null, 2)}
-    </pre>
-  )
-}
-
-
-// function Face(props) {
-//
-// }
 
 
 function MycroftPanel(props) {
   return (
-      <div>
-        <Face ws={props.ws} />
-        <Chat ws={props.ws} />
-        <div>text input</div>
-        <div>logo</div>
+      <div className="ChatPanel col border-right d-flex align-content-between flex-wrap">
+        <div className="">
+          <Face ws={props.ws} />
+        </div>
+        <div className="Chat d-flex flex-column justify-content-end">
+          <Chat ws={props.ws} />
+          <ChatBox ws={props.ws} />
+        </div>
+        <div className="Footer mt-3 border-top p-2">
+          <img className="img-fluid d-block" src={MIXILogo} alt="stylized word m.i.x.i." />
+          <p>
+            <strong>Data Converstaions</strong> is a project
+            of the <a href="https://mixi.edu">Adelphi University</a> Manhattan
+            Imagine-X Institute (MIXI).
+          </p>
+        </div>
       </div>
   )
 }

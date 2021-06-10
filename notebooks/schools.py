@@ -58,6 +58,13 @@ def load_charter_math():
     return df
 
 
+
+def load_demo_open_data():
+    demo_url = "https://data.cityofnewyork.us/resource/nie4-bv6q.csv?$limit=10000000"
+    df = pd.read_csv(demo_url)
+    return df
+
+
 def load_demographics():
     """
     Loads the NYC school-level demographic data from the
@@ -77,10 +84,10 @@ def load_demographics():
     return the dataframe
     """
     # load the school demo data from the open api server
-    demo_url = "https://data.cityofnewyork.us/resource/nie4-bv6q.csv?$limit=10000000"
-    boros = {"M":"Manhattan", "K": "Brooklyn", "X":"Bronx", "R":"Staten Island", "Q":"Queens"}
-    df = pd.read_csv(demo_url)
+    df = load_demo_open_data()
 
+
+    boros = {"M":"Manhattan", "K": "Brooklyn", "X":"Bronx", "R":"Staten Island", "Q":"Queens"}
 
     # figure out what grades they teach
     df["pk"] = df["grade_3k_pk_half_day_full"] > 0
@@ -379,12 +386,12 @@ def combine_test_data(df, test_df, test_type="math"):
 
 def segregation_test(demo_df):
     """
-    Here we perform the chi-square test to see the segregation of the 
+    Here we perform the chi-square test to see the segregation of the
     ethnic populations for each school...
-    Let us recall that we want to compare the distribution at the level 
+    Let us recall that we want to compare the distribution at the level
     of district with the distribution at the level of school.
-    We have four cathegories asian, black, white and hispanic; 
-    each school has its own observed frequencies f_obs and we are going to 
+    We have four cathegories asian, black, white and hispanic;
+    each school has its own observed frequencies f_obs and we are going to
     compare with the expected frequencies f_exp from the distribution at the district level...
     """
 
@@ -430,10 +437,10 @@ def segregation_test(demo_df):
         chi2 = stats.chisquare(f_obs,f_exp)
         chi2_value_data.append(chi2[0])
         chi2_pvalue_data.append(chi2[1])
-        # Let us note that we can also compute also the KS test as follows from the above data    
+        # Let us note that we can also compute also the KS test as follows from the above data
         sample1 = np.concatenate((np.ones(int(round(m_asian))), 2*np.ones(int(round(m_white))), 3*np.ones(int(round(m_black))),
                              4*np.ones(int(round(m_hispanic))), 5*np.ones(int(round(m_multrace)))))
-        sample2 = np.concatenate((np.ones(int(x_asian)), 2*np.ones(int(x_white)), 3*np.ones(int(x_black)), 
+        sample2 = np.concatenate((np.ones(int(x_asian)), 2*np.ones(int(x_white)), 3*np.ones(int(x_black)),
                              4*np.ones(int(x_hispanic)), 5*np.ones(int(x_multrace))))
         list1 = sample1.tolist()
         list2 = sample2.tolist()
@@ -450,7 +457,7 @@ def segregation_test(demo_df):
             list2.remove(random_item_from_list)
             KS_pvalue = ks_disc_2sample( list1, list2 )
             KS_pvalue_data.append( KS_pvalue )
-    
+
     # Since the script spent some time until finish, it is better to have the data in a .csv file
     # Below we construct that file...
     header_csv = " p_value_chi2test, chi2_value_chi2test, p_value_KStest      "
@@ -461,28 +468,8 @@ def segregation_test(demo_df):
 
     return (chi2_pvalue_data, chi2_value_data, KS_pvalue_data)
 
-    
+
 
 #demo_df["p_value_chi2test"]    = chi2_pvalue_data
 #demo_df["chi2_value_chi2test"] = chi2_value_data
 #demo_df["p_value_KStest"]      = KS_pvalue_data
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
