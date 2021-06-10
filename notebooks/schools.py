@@ -2,6 +2,10 @@ import pandas as pd
 import re
 from fuzzywuzzy import fuzz
 from itertools import chain
+from scipy import stats
+import random
+from ksdisc import ks_disc_2sample
+import numpy as np
 
 """
 Constants for subsets of columns
@@ -16,7 +20,7 @@ SCHOOL_BASIC = [
  'boro_name'
 ]
 
-DEMO_GROUPS = SCHOOL_BASIC + [
+DEMO_GROUPS = [
  'female',
  'female_1',
  'male',
@@ -297,7 +301,6 @@ def load_math_tests():
     """
     Loads the NYC Math test data from the
     open data portal and create a dataframe.
-
     return the dataframe
     """
     # load the school ELA test data from the open api server
@@ -371,3 +374,115 @@ def combine_test_data(df, test_df, test_type="math"):
         combined = combined.merge(t,on=["dbn", "year"], how="left")
 
     return combined
+
+###################################################################################################
+
+def segregation_test(demo_df):
+    """
+    Here we perform the chi-square test to see the segregation of the 
+    ethnic populations for each school...
+    Let us recall that we want to compare the distribution at the level 
+    of district with the distribution at the level of school.
+    We have four cathegories asian, black, white and hispanic; 
+    each school has its own observed frequencies f_obs and we are going to 
+    compare with the expected frequencies f_exp from the distribution at the district level...
+    """
+
+    # The probabilities from the district level...
+    N_total    = demo_df.groupby(["district","year"]).agg('sum')
+    p_asian    = N_total["asian"]/N_total["total_enrollment"]
+    p_white    = N_total["white"]/N_total["total_enrollment"]
+    p_black    = N_total["black"]/N_total["total_enrollment"]
+    p_hispanic = N_total["hispanic"]/N_total["total_enrollment"]
+    p_multrace = N_total["multiple_race_categories"]/N_total["total_enrollment"]
+
+    # Data at the level of school...
+    N_school   = demo_df.groupby(["district","year","school_name"]).agg('sum')
+
+    y_data = []
+    d_data = []
+    school_name_data = []
+    chi2_pvalue_data = []
+    chi2_value_data  = []
+    KS_pvalue_data   = []
+    for i in range(0, len(demo_df)):
+        d = int(demo_df.loc[i,"district"])
+        d_data.append(d)
+        y = int(demo_df.loc[i,"year"])
+        y_data.append(y)
+        sch_name = demo_df.loc[i,"school_name"]
+        school_name_data.append(sch_name)
+        # This are the observed frequencies f_obs...by school in district "d" and for year "y"...
+        x_asian    = N_school.loc[(d,y,sch_name),"asian"]
+        x_white    = N_school.loc[(d,y,sch_name),"white"]
+        x_black    = N_school.loc[(d,y,sch_name),"black"]
+        x_hispanic = N_school.loc[(d,y,sch_name),"hispanic"]
+        x_multrace = N_school.loc[(d,y,sch_name),"multiple_race_categories"]
+        f_obs      = [x_asian, x_white, x_black, x_hispanic, x_multrace]
+        # This are the expected frequencies f_exp...by school in district "d" and for year "y"...
+        m_asian    = p_asian[(d,y)] * N_school.loc[(d,y,sch_name),"total_enrollment"]
+        m_white    = p_white[(d,y)] * N_school.loc[(d,y,sch_name),"total_enrollment"]
+        m_black    = p_black[(d,y)] * N_school.loc[(d,y,sch_name),"total_enrollment"]
+        m_hispanic = p_hispanic[(d,y)] * N_school.loc[(d,y,sch_name),"total_enrollment"]
+        m_multrace = p_multrace[(d,y)] * N_school.loc[(d,y,sch_name),"total_enrollment"]
+        f_exp      = [m_asian, m_white, m_black, m_hispanic, m_multrace]
+        # Chi_square statistic and p-value
+        chi2 = stats.chisquare(f_obs,f_exp)
+        chi2_value_data.append(chi2[0])
+        chi2_pvalue_data.append(chi2[1])
+        # Let us note that we can also compute also the KS test as follows from the above data    
+        sample1 = np.concatenate((np.ones(int(round(m_asian))), 2*np.ones(int(round(m_white))), 3*np.ones(int(round(m_black))),
+                             4*np.ones(int(round(m_hispanic))), 5*np.ones(int(round(m_multrace)))))
+        sample2 = np.concatenate((np.ones(int(x_asian)), 2*np.ones(int(x_white)), 3*np.ones(int(x_black)), 
+                             4*np.ones(int(x_hispanic)), 5*np.ones(int(x_multrace))))
+        list1 = sample1.tolist()
+        list2 = sample2.tolist()
+        if (len(list1)==len(list2)):
+            KS_pvalue = ks_disc_2sample( list1, list2 )
+            KS_pvalue_data.append( KS_pvalue )
+        elif (len(list1) > len(list2)):
+            random_item_from_list = random.choice(list1)
+            list1.remove(random_item_from_list)
+            KS_pvalue = ks_disc_2sample( list1, list2 )
+            KS_pvalue_data.append( KS_pvalue )
+        elif (len(list1) < len(list2)):
+            random_item_from_list = random. choice(list2)
+            list2.remove(random_item_from_list)
+            KS_pvalue = ks_disc_2sample( list1, list2 )
+            KS_pvalue_data.append( KS_pvalue )
+    
+    # Since the script spent some time until finish, it is better to have the data in a .csv file
+    # Below we construct that file...
+    header_csv = " p_value_chi2test, chi2_value_chi2test, p_value_KStest      "
+    Dls_modif_to_dat = np.column_stack( ( chi2_pvalue_data, chi2_value_data, KS_pvalue_data ) )
+    np.savetxt( 'segregation_tests.csv',
+	    Dls_modif_to_dat, delimiter=',', header= header_csv, fmt=['%18.12E','%18.12E','%18.12E'] )
+
+
+    return (chi2_pvalue_data, chi2_value_data, KS_pvalue_data)
+
+    
+
+#demo_df["p_value_chi2test"]    = chi2_pvalue_data
+#demo_df["chi2_value_chi2test"] = chi2_value_data
+#demo_df["p_value_KStest"]      = KS_pvalue_data
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
