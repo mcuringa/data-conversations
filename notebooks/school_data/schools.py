@@ -122,10 +122,11 @@ def load_demographics():
     df["non_white_asian"] = df.total_enrollment - df.white_asian
     df["non_white_asian_1"] = df.non_white_asian / df.total_enrollment
 
-
+    # list comprehension to get the columns that should be a %
     pct_cols = [col for col in df.columns if col.endswith("_1") and col != "grade_1"]
 
-    df = df.apply(lambda x: pct_to_float(x, pct_cols), axis=1)
+    df = df.apply(lambda row: pct_to_float(row, pct_cols), axis=1)
+
     for col in pct_cols:
         df[col] = pd.to_numeric(df[col])
 
@@ -154,7 +155,7 @@ def pct_to_float(row, cols):
         elif "Above" in row[col]:
             row[col] = .96
         else:
-            pct = str(row.poverty_1)[:-1]
+            pct = str(row[col])[:-1]
             row[col] = float(pct) / 100
     return row
 
